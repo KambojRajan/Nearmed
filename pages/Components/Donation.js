@@ -1,11 +1,48 @@
 import React, { useState } from 'react';
 import { GiButterfly } from 'react-icons/gi';
 import Link from 'next/link';
-import { CustomInputCountry, countryArr, statesArr } from "./statesCountries"
+import { useRouter } from 'next/navigation';
+
 
 function Donation() {
-    const [formData, setFormData] = useState({ title: '', firstName: '', lastName: '', country: '', state: '', zipCode: '', phone: 0, email: '', amount: 0 });
-    const [errors, setErrors] = useState({ title: '', firstName: '', lastName: '', country: '', state: '', zipCode: '', phone: '', email: '', amount: '' });
+    const [formData, setFormData] = useState({ title: '', firstName: '', lastName: '', address: '', zipCode: '', phone: '', email: '', amount: 0 });
+    const [errors, setErrors] = useState({ title: '', firstName: '', lastName: '', zipCode: '', phone: '', email: '', amount: '' });
+    const router = useRouter()
+    const donate = (event) => {
+        event.preventDefault();
+        const { title, firstName, lastName, address, zipCode, phone, email, amount, } = formData;
+
+        fetch("http://localhost:5000/donate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                title,
+                firstName,
+                lastName,
+                address,
+                zipCode,
+                phoneNumber: phone,
+                email,
+                amount,
+            }),
+        }).then((response) => {
+            if (response.ok) {
+                router.push('/')
+                return response.json();
+            } else {
+                throw new Error("Donation failed");
+            }
+        })
+            .then((data) => {
+                console.log(data);
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+    };
+
 
     function CustomInput(props) {
         const error = errors[props.id];
@@ -18,107 +55,13 @@ function Donation() {
                     type={props.type}
                     id={props.id}
                     className="focus:outline-none w-full border-b-2 border-gray-300 py-2 px-4 mb-4"
+                    value={formData[props.id]}
+                    onChange={(ev) => setFormData({ ...formData, [props.id]: ev.target.value })}
                     placeholder={props.placeholder}
                 />
                 {error && <p className="text-red-500">{error}</p>}
             </div>
         );
-    }
-
-
-    function handleValidation(event) {
-        event.preventDefault();
-        const { title, firstName, lastName, country, state, address, zipCode, phone, email, amount } = event.target.elements;
-        const newErrors = { ...errors };
-        const newData = { ...formData };
-
-        if (title.value.trim() !== '') {
-            if (!['Mr', 'Ms', 'Mrs', 'mr', 'mrs', 'ms'].includes(title.value.trim().toLowerCase())) {
-                newErrors.title = "Invalid title";
-            } else {
-                newErrors.title = "";
-                newData.title = title.value.trim();
-            }
-        } else {
-            newErrors.title = "Title is required";
-        }
-        if (country !== "" && state !== "" && country in countryArr && state in statesArr[country]) {
-            newErrors.state = "";
-            newData.state = state.value;
-            newData.country = country.value;
-        } else {
-            newErrors.state = "Invalid state";
-        }
-
-        if (country.value === "United States") {
-            const usZipCodeRegex = /^\d{5}(?:-\d{4})?$/;
-            if (!usZipCodeRegex.test(zipCode.value.trim())) {
-                newErrors.zipCode = "Invalid zip code";
-            } else {
-                newErrors.zipCode = "";
-                newData.zipCode = zipCode.value.trim();
-            }
-        } else if (country.value === "Canada") {
-            const caPostalCodeRegex = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/;
-            if (!caPostalCodeRegex.test(zipCode.value.trim())) {
-                newErrors.zipCode = "Invalid postal code";
-            } else {
-                newErrors.zipCode = "";
-                newData.zipCode = zipCode.value.trim();
-            }
-        } else if (country.value === "Australia") {
-            const auPostCodeRegex = /^\d{4}$/;
-            if (!auPostCodeRegex.test(zipCode.value.trim())) {
-                newErrors.zipCode = "Invalid postal code";
-            } else {
-                newErrors.zipCode = "";
-                newData.zipCode = zipCode.value.trim();
-            }
-        } else if (country.value === "India") {
-            const inPinCodeRegex = /^\d{6}$/;
-            if (!inPinCodeRegex.test(zipCode.value.trim())) {
-                newErrors.zipCode = "Invalid pin code";
-            } else {
-                newErrors.zipCode = "";
-                newData.zipCode = zipCode.value.trim();
-            }
-        } else {
-            newErrors.zipCode = "Invalid zip/postal code";
-        }
-
-        if (phone.value.trim() !== "") {
-            const phoneRegex = /^[0-9]{10}$/;
-            if (!phoneRegex.test(phone.value.trim())) {
-                newErrors.phone = "Invalid phone number";
-            } else {
-                newErrors.phone = "";
-                newData.phone = phone.value.trim();
-            }
-        } else {
-            newErrors.phone = "Phone number is required";
-        }
-
-        if (email.value.trim() !== '') {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email.value.trim())) {
-                newErrors.email = "Invalid email";
-            } else {
-                newErrors.email = "";
-                newData.email = email.value.trim();
-            }
-        } else {
-            newErrors.email = "Email is required";
-        }
-
-        if (amount.value < 0) {
-            newErrors.amount = "Invalid amount";
-        } else {
-            newErrors.amount = "";
-            newData.amount = amount.value;
-        }
-
-        setErrors(newErrors);
-        setFormData(newData);
     }
 
 
@@ -129,16 +72,14 @@ function Donation() {
             </div>
             <div className='flex-1 flex items-center'>
                 <div className='w-2/3 h-full overflow-auto'>
-                    <form className="bg-white p-8 rounded-lg shadow-lg" action='/doDonation' >
+                    <form className="bg-white p-8 rounded-lg shadow-lg" onSubmit={donate} >
                         <h2 className="text-3xl font-bold mb-6 text-indigo-500">Billing Information</h2>
                         <div className="grid grid-cols-2 gap-6">
                             <CustomInput type='text' id='title' title='Title' placeholder="e.g. Mr, Mrs, Ms" />
                             <CustomInput type='text' id='firstName' title='First Name' placeholder="Enter your first name" />
                             <CustomInput type='text' id='lastName' title='Last Name' placeholder="Enter your last name" />
-                            <CustomInputCountry type='text' id='country' title='Country' placeholder="Enter your country" />
-                            <CustomInput type='text' id='state' title='State' placeholder="Enter your state" />
                             <CustomInput type='text' id='address' title='Address' placeholder="Enter your address" />
-                            <CustomInput type='text' id='zipCode' title='Zip/Postal Code' placeholder="Enter your zip/postal code" />
+                            <CustomInput type='text' id='zipCode' title='ZipCode' placeholder="Enter your zip/postal code" />
                             <CustomInput type='text' id='phone' title='Phone' placeholder="Enter your phone number" />
                             <CustomInput type='email' id='email' title='Email' placeholder="Enter your email address" />
                             <CustomInput type='number' id='amount' title='Amount' placeholder="Donation amount" />

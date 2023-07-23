@@ -1,34 +1,36 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
+import Link from 'next/link';
 import { GiButterfly } from 'react-icons/gi';
 import { CgProfile } from 'react-icons/cg';
 import { FiSearch } from 'react-icons/fi';
 import { RxCross1 } from 'react-icons/rx';
 import { DropCare, DropHealth, DropProf } from './NavbarUtils';
-import Link from 'next/link';
+import { UserContext } from '../UserContext';
 import { useRouter } from 'next/router';
 
-function Navbar({ hasLoggedIn,password }) {
-  const page = useRouter();
+function Navbar() {
+  const { userInfo, setUserInfo } = useContext(UserContext);
+  const router = useRouter();
   const [careDrop, setCareDrop] = useState(false);
-  const [professional, setprofessional] = useState(false);
+  const [professional, setProfessional] = useState(false);
   const [health, setHealth] = useState(false);
   const [searchNavActive, setSearchNavActive] = useState(false);
 
   const handleClickCare = () => {
     setCareDrop(!careDrop);
-    setprofessional(false);
+    setProfessional(false);
     setHealth(false);
   };
 
   const handleClickProfessional = () => {
     setCareDrop(false);
-    setprofessional(!professional);
+    setProfessional(!professional);
     setHealth(false);
   };
 
   const handleClickHealth = () => {
     setCareDrop(false);
-    setprofessional(false);
+    setProfessional(false);
     setHealth(!health);
   };
 
@@ -36,30 +38,35 @@ function Navbar({ hasLoggedIn,password }) {
     setSearchNavActive(!searchNavActive);
   };
 
-
-
   const NonSearchNav = () => (
     <div className='bg-gray-800 border-gray-800 border-2'>
       <nav className='mx-[5%]'>
         <div className='flex items-center justify-between py-4'>
           <div className='flex items-center gap-4'>
-            <Link href='/'><GiButterfly className='text-5xl text-indigo-400' /> </Link>
+            <Link href='/'>
+              <GiButterfly className='text-5xl text-indigo-400' />
+            </Link>
             <div className='flex gap-7'>
-              <Link href='/'><h1 className='text-3xl font-bold text-white'>Nearmed</h1></Link>
+              <Link href='/'>
+                <h1 className='text-3xl font-bold text-white'>Nearmed</h1>
+              </Link>
               <h3
-                className={`font-semibold text-md text-gray-400 hover:border-b-2 hover:cursor-pointer hover:border-indigo-400 p-1 ${careDrop ? 'border-b-2 border-indigo-400' : ''}`}
+                className={`font-semibold text-md text-gray-400 hover:border-b-2 hover:cursor-pointer hover:border-indigo-400 p-1 ${careDrop ? 'border-b-2 border-indigo-400' : ''
+                  }`}
                 onClick={handleClickCare}
               >
                 Nearmed Care
               </h3>
               <h3
-                className={`font-semibold text-md text-gray-400 hover:border-b-2 hover:cursor-pointer hover:border-indigo-400 p-1 ${professional ? 'border-b-2 border-indigo-400' : ''}`}
+                className={`font-semibold text-md text-gray-400 hover:border-b-2 hover:cursor-pointer hover:border-indigo-400 p-1 ${professional ? 'border-b-2 border-indigo-400' : ''
+                  }`}
                 onClick={handleClickProfessional}
               >
                 Medical professional
               </h3>
               <h3
-                className={`font-semibold text-md text-gray-400 hover:border-b-2 hover:cursor-pointer hover:border-indigo-400 p-1 ${health ? 'border-b-2 border-indigo-400' : ''}`}
+                className={`font-semibold text-md text-gray-400 hover:border-b-2 hover:cursor-pointer hover:border-indigo-400 p-1 ${health ? 'border-b-2 border-indigo-400' : ''
+                  }`}
                 onClick={handleClickHealth}
               >
                 Health
@@ -77,11 +84,19 @@ function Navbar({ hasLoggedIn,password }) {
                 Donate
               </li>
             </Link>
-            <Link href={hasLoggedIn ? `/Components/${password}` : '/Components/LoginPage'}>
-              <li className='p-2 hover:cursor-pointer text-lg font-semibold flex items-center gap-1 text-white hover:bg-indigo-400 rounded-full'>
-                <CgProfile className='text-3xl' /> {(hasLoggedIn) ? 'Profile' : 'Login'}
-              </li>
-            </Link>
+            {userInfo && Object.keys(userInfo).length > 0 ? (
+              <Link href={`/Components/${userInfo.id}`}>
+                <li className='p-2 hover:cursor-pointer text-lg font-semibold flex items-center gap-1 text-white hover:bg-indigo-400 rounded-full'>
+                  <CgProfile className='text-3xl' /> {userInfo.firstName}
+                </li>
+              </Link>
+            ) : (
+              <Link href='/Components/LoginPage'>
+                <li className='p-2 hover:cursor-pointer text-lg font-semibold flex items-center gap-1 text-white hover:bg-indigo-400 rounded-full'>
+                  <CgProfile className='text-3xl' /> Login
+                </li>
+              </Link>
+            )}
             <li>
               <FiSearch
                 onClick={handleClickSearch}
@@ -96,6 +111,7 @@ function Navbar({ hasLoggedIn,password }) {
       {health && <DropHealth />}
     </div>
   );
+
 
   const SearchNav = () => (
     <div>
@@ -117,11 +133,8 @@ function Navbar({ hasLoggedIn,password }) {
       </div>
     </div>
   );
-  return (
-    <div>
-      {searchNavActive ? <SearchNav /> : <NonSearchNav />}
-    </div>
-  );
+
+  return <div>{searchNavActive ? <SearchNav /> : <NonSearchNav />}</div>;
 }
 
 export default Navbar;

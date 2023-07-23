@@ -1,6 +1,6 @@
 import Navbar from "./Components/Navbar";
 import MainPage from "./Components/mainPage";
-import UserProfile from "./Components/[password]";
+import Profile from "./Components/[id]"
 
 export default function Home() {
   return (
@@ -8,6 +8,7 @@ export default function Home() {
       <Navbar />
       <MainPage />
       {/* <UserProfile /> */}
+      {/* <Profile/> */}
     </div>
   );
 }

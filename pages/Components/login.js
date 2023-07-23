@@ -1,30 +1,42 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import Link from 'next/link';
 import { FcGoogle } from 'react-icons/fc';
 import { RiMicrosoftFill } from 'react-icons/ri';
+import { useRouter } from 'next/navigation';
+import {UserContext} from '../UserContext'
 
 function AppointmentSignIn() {
-    const [email, setEmail] = useState('');
+    const {setUserInfo} = useContext(UserContext)
+    const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [errors, setErrors] = useState({});
-    // the logic for validation is not that good but can be worked on if want
-    const handleSubmit = (event) => {
+    const router = useRouter();
+    
+
+    const handleSubmit = async (event) => {
         event.preventDefault();
-
-        const validationErrors = {};
-        if (email.trim() === '') {
-            validationErrors.email = 'Email is required';
+        try {
+          const response = await fetch("http://localhost:5000/login", {
+            method: "POST",
+            body: JSON.stringify({ userName, password }),
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+          });
+      
+          if (response.ok) {
+            const data = await response.json(); 
+            setUserInfo(data); 
+            router.push('/');
+          } else {
+            const errorData = await response.json(); 
+            throw new Error(errorData.error || "Incorrect username or password");
+          }
+        } catch (error) {
+          console.log("Error while logging in:", error.message);
+          alert(error.message || "Failed to log in. Please try again.");
         }
-        if (password.trim() === '') {
-            validationErrors.password = 'Password is required';
-        }
-
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
-            return;
-        }
-
-    };
+      };
+      
 
     return (
         <div className="h-screen flex flex-col items-center justify-center bg-neutral-400 select-none">
@@ -37,15 +49,15 @@ function AppointmentSignIn() {
                 </div>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <input
-                        type="email"
-                        name="email"
-                        id="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        type="text"
+                        name="userName"
+                        id="userName"
+                        placeholder="User Name"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
                         className="w-64 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
-                    {errors.email && <p className="text-red-500">{errors.email}</p>}
+                    {errors.userName && <p className="text-red-500">{errors.userName}</p>}
                     <input
                         type="password"
                         name="password"
