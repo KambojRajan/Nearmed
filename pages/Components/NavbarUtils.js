@@ -30,7 +30,7 @@ export const DropCare = () => {
             { href: "/Components/InfoPage", title: "Care at Nearmed" },
             { href: "/Components/AboutDoctors", title: "About our Doctors" },
             { href: "/Components/Clinic", title: "Clinic" },
-            { href: "/Components/Sorry", title: "Insurance and Payments" },
+            { href: "/Components/Insurance", title: "Insurance and Payments" },
         ],
         [
             { href: "/Components/FindADoctor", title: "Find Doctor" },

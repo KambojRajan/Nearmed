@@ -1,11 +1,28 @@
-import React, { useState } from 'react';
+import { useContext, useState } from 'react';
+import { UserContext } from '../UserContext';
+import { useRouter } from 'next/router';
 import Link from 'next/link';
 
 function NewPatientsP1() {
-    const [response, setResponse] = useState(null);
+    const router = useRouter();
+    const isAPatient = router.query.response;
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const { setUserInfo } = useContext(UserContext);
 
-    const handleButtonClick = (value) => {
-        setResponse(value);
+    const handleNextClick = () => {
+        const queryParams = {
+            isAPatient,
+            firstName,
+            lastName,
+        };
+
+        setUserInfo({ firstName, lastName });
+
+        router.push({
+            pathname: '/NewPatientsP4',
+            query: queryParams,
+        });
     };
 
     return (
@@ -21,7 +38,6 @@ function NewPatientsP1() {
                         <Link href={{ pathname: './NewPatientsP2', query: { response: 'yes' } }}>
                             <button
                                 className="w-full pb-20 rounded-md font-bold"
-                                onClick={() => handleButtonClick('yes')}
                             >
                                 Yes
                             </button>
@@ -32,7 +48,6 @@ function NewPatientsP1() {
                         <Link href={{ pathname: './NewPatientsP201', query: { response: 'no' } }}>
                             <button
                                 className="w-full pt-16 rounded-md font-bold"
-                                onClick={() => handleButtonClick('no')}
                             >
                                 No
                             </button>

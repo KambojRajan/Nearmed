@@ -1,21 +1,22 @@
-import React, { useState } from 'react';
+import React, {useContext, useState } from 'react';
 import Link from 'next/link';
 import { AiOutlineRight } from 'react-icons/ai';
 import { useRouter } from 'next/router';
+import { UserContext } from '../UserContext';
 
 function NewPatientsP1() {
     const router = useRouter();
     const isAPatient = router.query.response;
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
-
+    const { setUserInfo } = useContext(UserContext);
     const handleNextClick = () => {
         const queryParams = {
             isAPatient,
             firstName,
             lastName,
         };
-
+        setUserInfo({firstName,lastName});
         const queryString = Object.keys(queryParams)
             .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
             .join('&');

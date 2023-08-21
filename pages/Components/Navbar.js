@@ -37,6 +37,8 @@ function Navbar() {
   const handleClickSearch = () => {
     setSearchNavActive(!searchNavActive);
   };
+  console.log("hello")
+  console.log(userInfo)
 
   const NonSearchNav = () => (
     <div className='bg-gray-800 border-gray-800 border-2'>
@@ -84,10 +86,11 @@ function Navbar() {
                 Donate
               </li>
             </Link>
+            {console.log(userInfo)}
             {userInfo && Object.keys(userInfo).length > 0 ? (
               <Link href={`/Components/${userInfo.id}`}>
                 <li className='p-2 hover:cursor-pointer text-lg font-semibold flex items-center gap-1 text-white hover:bg-indigo-400 rounded-full'>
-                  <CgProfile className='text-3xl' /> {userInfo.firstName}
+                  <CgProfile className='text-3xl' /> {userInfo.firstName.split(" ")[0]}
                 </li>
               </Link>
             ) : (

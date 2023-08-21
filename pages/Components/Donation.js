@@ -1,67 +1,52 @@
 import React, { useState } from 'react';
 import { GiButterfly } from 'react-icons/gi';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
+import { useRouter } from 'next/router';
+import { stripePromise } from './stripeUtils'
 
 function Donation() {
     const [formData, setFormData] = useState({ title: '', firstName: '', lastName: '', address: '', zipCode: '', phone: '', email: '', amount: 0 });
-    const [errors, setErrors] = useState({ title: '', firstName: '', lastName: '', zipCode: '', phone: '', email: '', amount: '' });
-    const router = useRouter()
-    const donate = (event) => {
-        event.preventDefault();
-        const { title, firstName, lastName, address, zipCode, phone, email, amount, } = formData;
+    const router = useRouter();
 
-        fetch("http://localhost:5000/donate", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                title,
-                firstName,
-                lastName,
-                address,
-                zipCode,
-                phoneNumber: phone,
-                email,
-                amount,
-            }),
-        }).then((response) => {
+    const donate = async (event) => {
+        event.preventDefault();
+        const { title, firstName, lastName, address, zipCode, phone, email, amount } = formData;
+
+        try {
+            const response = await fetch("http://localhost:5000/donate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    title,
+                    firstName,
+                    lastName,
+                    address,
+                    zipCode,
+                    phoneNumber: phone,
+                    email,
+                    amount,
+                }),
+            });
+
             if (response.ok) {
-                router.push('/')
-                return response.json();
+                router.push('/');
+                const data = await response.json();
+                const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+                const { error } = await stripe.redirectToCheckout({
+                    sessionId: data.sessionId,
+                });
+
+                if (error) {
+                    console.error('Error redirecting to Stripe checkout:', error);
+                }
             } else {
                 throw new Error("Donation failed");
             }
-        })
-            .then((data) => {
-                console.log(data);
-            })
-            .catch((error) => {
-                console.error(error);
-            });
-    };
-
-
-    function CustomInput(props) {
-        const error = errors[props.id];
-        return (
-            <div>
-                <label htmlFor={props.id} className="block font-semibold mb-2">
-                    {props.title}
-                </label>
-                <input
-                    type={props.type}
-                    id={props.id}
-                    className="focus:outline-none w-full border-b-2 border-gray-300 py-2 px-4 mb-4"
-                    value={formData[props.id]}
-                    onChange={(ev) => setFormData({ ...formData, [props.id]: ev.target.value })}
-                    placeholder={props.placeholder}
-                />
-                {error && <p className="text-red-500">{error}</p>}
-            </div>
-        );
+        } catch (error) {
+            console.error(error);
+        }
     }
 
 
@@ -75,14 +60,120 @@ function Donation() {
                     <form className="bg-white p-8 rounded-lg shadow-lg" onSubmit={donate} >
                         <h2 className="text-3xl font-bold mb-6 text-indigo-500">Billing Information</h2>
                         <div className="grid grid-cols-2 gap-6">
-                            <CustomInput type='text' id='title' title='Title' placeholder="e.g. Mr, Mrs, Ms" />
-                            <CustomInput type='text' id='firstName' title='First Name' placeholder="Enter your first name" />
-                            <CustomInput type='text' id='lastName' title='Last Name' placeholder="Enter your last name" />
-                            <CustomInput type='text' id='address' title='Address' placeholder="Enter your address" />
-                            <CustomInput type='text' id='zipCode' title='ZipCode' placeholder="Enter your zip/postal code" />
-                            <CustomInput type='text' id='phone' title='Phone' placeholder="Enter your phone number" />
-                            <CustomInput type='email' id='email' title='Email' placeholder="Enter your email address" />
-                            <CustomInput type='number' id='amount' title='Amount' placeholder="Donation amount" />
+
+
+                            <div>
+                                <label htmlFor='title' className="block font-semibold mb-2">
+                                    Title
+                                </label>
+                                <input
+                                    type={'text'}
+                                    id={'title'}
+                                    className="focus:outline-none w-full border-b-2 border-gray-300 py-2 px-4 mb-4"
+                                    value={formData['title']}
+                                    onChange={(ev) => setFormData({ ...formData, ['title']: ev.target.value })}
+                                    placeholder={'e.g. Mr, Mrs, Ms'}
+                                />
+                                {/* {error && <p className="text-red-500">{error}</p>} */}
+                            </div>
+                            <div>
+                                <label htmlFor='title' className="block font-semibold mb-2">
+                                    First Name
+                                </label>
+                                <input
+                                    type={'text'}
+                                    id={'firstName'}
+                                    className="focus:outline-none w-full border-b-2 border-gray-300 py-2 px-4 mb-4"
+                                    value={formData['firstName']}
+                                    onChange={(ev) => setFormData({ ...formData, ['firstName']: ev.target.value })}
+                                    placeholder={'First Name'}
+                                />
+                                {/* {error && <p className="text-red-500">{error}</p>} */}
+                            </div>
+                            <div>
+                                <label htmlFor='lastName' className="block font-semibold mb-2">
+                                    Last Name
+                                </label>
+                                <input
+                                    type={'text'}
+                                    id={'lastName'}
+                                    className="focus:outline-none w-full border-b-2 border-gray-300 py-2 px-4 mb-4"
+                                    value={formData['lastName']}
+                                    onChange={(ev) => setFormData({ ...formData, ['lastName']: ev.target.value })}
+                                    placeholder={'Last Name'}
+                                />
+                                {/* {error && <p className="text-red-500">{error}</p>} */}
+                            </div>
+                            <div>
+                                <label htmlFor='address' className="block font-semibold mb-2">
+                                    Address
+                                </label>
+                                <input
+                                    type={'text'}
+                                    id={'address'}
+                                    className="focus:outline-none w-full border-b-2 border-gray-300 py-2 px-4 mb-4"
+                                    value={formData['address']}
+                                    onChange={(ev) => setFormData({ ...formData, ['address']: ev.target.value })}
+                                    placeholder={'Address'}
+                                />
+                                {/* {error && <p className="text-red-500">{error}</p>} */}
+                            </div>
+                            <div>
+                                <label htmlFor='title' className="block font-semibold mb-2">
+                                    Zip code
+                                </label>
+                                <input
+                                    type={'text'}
+                                    id={'zipCode'}
+                                    className="focus:outline-none w-full border-b-2 border-gray-300 py-2 px-4 mb-4"
+                                    value={formData['zipCode']}
+                                    onChange={(ev) => setFormData({ ...formData, ['zipCode']: ev.target.value })}
+                                    placeholder={'Zip Code'}
+                                />
+                                {/* {error && <p className="text-red-500">{error}</p>} */}
+                            </div>
+                            <div>
+                                <label htmlFor='phone' className="block font-semibold mb-2">
+                                    Phone Number
+                                </label>
+                                <input
+                                    type={'text'}
+                                    id={'phone'}
+                                    className="focus:outline-none w-full border-b-2 border-gray-300 py-2 px-4 mb-4"
+                                    value={formData['phone']}
+                                    onChange={(ev) => setFormData({ ...formData, ['phone']: ev.target.value })}
+                                    placeholder={'Phone Number'}
+                                />
+                                {/* {error && <p className="text-red-500">{error}</p>} */}
+                            </div>
+                            <div>
+                                <label htmlFor='email' className="block font-semibold mb-2">
+                                    Email
+                                </label>
+                                <input
+                                    type={'email'}
+                                    id={'email'}
+                                    className="focus:outline-none w-full border-b-2 border-gray-300 py-2 px-4 mb-4"
+                                    value={formData['email']}
+                                    onChange={(ev) => setFormData({ ...formData, ['email']: ev.target.value })}
+                                    placeholder={'Your Email'}
+                                />
+                                {/* {error && <p className="text-red-500">{error}</p>} */}
+                            </div>
+                            <div>
+                                <label htmlFor='amount' className="block font-semibold mb-2">
+                                    Amount
+                                </label>
+                                <input
+                                    type={'number'}
+                                    id={'amount'}
+                                    className="focus:outline-none w-full border-b-2 border-gray-300 py-2 px-4 mb-4"
+                                    value={formData['amount']}
+                                    onChange={(ev) => setFormData({ ...formData, ['amount']: ev.target.value })}
+                                    placeholder={'Amount'}
+                                />
+                                {/* {error && <p className="text-red-500">{error}</p>} */}
+                            </div>
                         </div>
                         <button type="submit" className="bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg mt-8 hover:bg-indigo-600">Donate Now</button>
                     </form>

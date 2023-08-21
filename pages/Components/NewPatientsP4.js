@@ -1,29 +1,39 @@
-import Link from 'next/link';
+import { useContext, useState } from 'react';
+import { UserContext } from '../UserContext';
 import { useRouter } from 'next/router';
-import React, { useState } from 'react';
-import { AiOutlineRight } from 'react-icons/ai';
+import Link from 'next/link';
+import {AiOutlineRight} from 'react-icons/ai'
 
-function NewPatientsP1() {
-    const [isYes, SetYes] = useState(false);
+function NewPatientsP4() {
     const router = useRouter();
-    const { isAPatient, firstName, lastName, relName, relation } = router.query;
+    const { query } = router;
+    const { isAPatient, firstName, lastName,relation } = query;
     const [description, setDescription] = useState('');
+    const { setUserInfo } = useContext(UserContext);
 
-    const handleNextClick = () => {
-        const queryParams = {
-            isAPatient,
-            firstName,
-            lastName,
-            description,
-            ...(relName && { relName }), // Include only if relName has a value
-            ...(relation && { relation }), // Include only if relation has a value
-        };
+    const handleNextClick = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/newPatient', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firstName, lastName, description, relation }),
+            });
 
-        const queryString = Object.keys(queryParams)
-            .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
-            .join('&');
+            if (!response.ok) {
+                throw new Error('Error while submitting data');
+            }
 
-        router.push(`/AppointmentDetails?${queryString}`);
+            // Assuming the backend returns a JSON object with success as true
+            const data = await response.json();
+            if (data.success) {
+                setUserInfo({ firstName, lastName, description, relation });
+                router.push('/Components/Done');
+            } else {
+                throw new Error('Server response indicates failure');
+            }
+        } catch (error) {
+            console.error('Error during API call:', error);
+        }
     };
 
     return (
@@ -47,7 +57,7 @@ function NewPatientsP1() {
                 </div>
             </div>
             <Link
-                href={`./AppointmentDetails?isAPatient=${isAPatient}&firstName=${firstName}&lastName=${lastName}&relName=${relName || ''}&relation=${relation || ''}&description=${description}`}
+                href={`/Components/Done?isAPatient=${isAPatient}&firstName=${firstName}&lastName=${lastName}&relation=${relation|null || ''}&description=${description}`}
             >
                 <AiOutlineRight className="text-4xl text-gray-400 hover:text-gray-800" onClick={handleNextClick} />
             </Link>
@@ -55,4 +65,4 @@ function NewPatientsP1() {
     );
 }
 
-export default NewPatientsP1;
+export default NewPatientsP4;

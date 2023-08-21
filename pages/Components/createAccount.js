@@ -9,6 +9,10 @@ function CreateAccount() {
     const [lastName, setLastName] = useState("");
     const [password, setPassword] = useState("");
     const [email, setEmail] = useState("");
+    const [age, setAge] = useState(0);
+    const [gender, setGender] = useState('');
+    const [address, setAddress] = useState("");
+    const [phoneNumber, setphoneNumber] = useState('')
     const router = useRouter()
     const { setUserInfo } = useContext(UserContext)
     const createAccount = (event) => {
@@ -23,22 +27,26 @@ function CreateAccount() {
                 middleName,
                 lastName,
                 password,
+                age,
+                gender,
+                address,
+                phoneNumber,
                 email,
             }),
         }).then(async (res) => {
             if (res.ok) {
                 const data = await res.json();
-                setUserInfo(data);
-                router.push('/')
+                setUserInfo(data); 
+                router.push('/');
                 return res.json();
             } else {
-                throw new Error("Can't create a new account")
+                throw new Error("Can't create a new account");
             }
         }).then((data) => {
             console.log(data);
         }).catch((err) => {
-            console.log(err)
-        })
+            console.log(err);
+        });
     }
 
     return (
@@ -86,6 +94,64 @@ function CreateAccount() {
                                 value={lastName}
                                 onChange={(ev) => setLastName(ev.target.value)}
                                 placeholder="Last Name"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row md:space-x-4">
+                        <div className="flex flex-col">
+                            <label htmlFor="age" className="text-lg font-semibold mb-2">
+                                Age:
+                            </label>
+                            <input
+                                type="number"
+                                name="age"
+                                id="age"
+                                value={age}
+                                onChange={(ev) => setAge(ev.target.value)}
+                                placeholder="age"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label htmlFor="Gender" className="text-lg font-semibold mb-2">
+                                Gender:
+                            </label>
+                            <input
+                                type="text"
+                                name="gender"
+                                id="gender"
+                                value={gender}
+                                onChange={(ev) => setGender(ev.target.value)}
+                                placeholder="Gender"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label htmlFor="address" className="text-lg font-semibold mb-2">
+                                Address:
+                            </label>
+                            <input
+                                type="text"
+                                name="address"
+                                id="address"
+                                value={address}
+                                onChange={(ev) => setAddress(ev.target.value)}
+                                placeholder="Address"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                        </div>
+                        <div className="flex flex-col">
+                            <label htmlFor="phoneNumber" className="text-lg font-semibold mb-2">
+                                Phone number:
+                            </label>
+                            <input
+                                type="text"
+                                name="phoneNumber"
+                                id="phoneNumber"
+                                value={phoneNumber}
+                                onChange={(ev) => setphoneNumber(ev.target.value)}
+                                placeholder="phoneNumber"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             />
                         </div>

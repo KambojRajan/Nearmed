@@ -36,7 +36,7 @@ mongoose
 
 app.post("/createAccount", async (req, res) => {
   try {
-    const { firstName, middleName, lastName, email, password } = req.body;
+    const { firstName, middleName, lastName, email, password, age, gender, address, phoneNumber } = req.body;
     const hashedPassword = bcrypt.hashSync(password, bcrypt.genSaltSync(10));
     const userDoc = await User.create({
       firstName,
@@ -44,27 +44,46 @@ app.post("/createAccount", async (req, res) => {
       lastName,
       email,
       password: hashedPassword,
+      age,
+      gender,
+      address,
+      phoneNumber,
     });
-    const appointmentDoc = Appointment.create({
-      userName: (firstName + middleName + lastName),
+    const appointmentDoc = await Appointment.create({
+      userName: `${firstName} ${middleName} ${lastName}`,
       password: hashedPassword,
-    })
+    });
     res.status(200).json({ success: true });
   } catch (err) {
     console.log("Error while creating an account", err);
-    res.status(500).json({ success: false, error: "Failed to create an account" });
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to create an account" });
   }
 });
 
-app.post("/login", async (req, res) => {
+function validateLoginRequest(req, res, next) {
+  const { userName, password, email } = req.body;
+
+  if (!userName || !password || !email) {
+    return res.status(400).json({ success: false, error: 'Missing required fields' });
+  }
+
+  next();
+}
+app.post('/login', validateLoginRequest, async (req, res) => {
   try {
-    const { userName, password } = req.body;
-    const userDoc = await User.findOne({ firstName: userName });
+    const { userName, password, email } = req.body;
+    console.log("*", userName, password, "*")
+    const name = userName.split(" ")[0]
+    const userDoc = await User.findOne({ firstName: name, email: email });
+
     if (userDoc) {
       const isPasswordCorrect = bcrypt.compareSync(password, userDoc.password);
+
       if (isPasswordCorrect) {
-        const token = jwt.sign({ userName, id: userDoc.id }, secretKey);
-        res.cookie("token", token, { httpOnly: true });
+        const token = jwt.sign({ userName, id: userDoc._id }, secretKey);
+        res.cookie('token', token, { httpOnly: true });
 
         res.status(200).json({
           id: userDoc._id,
@@ -76,19 +95,16 @@ app.post("/login", async (req, res) => {
           email: userDoc.email,
         });
       } else {
-        res.status(401).json({ success: false, error: "Incorrect password" });
+        res.status(401).json({ success: false, error: 'Incorrect password' });
       }
     } else {
-      res.status(400).json({ success: false, error: "Invalid username" });
+      res.status(400).json({ success: false, error: 'Invalid username or email' });
     }
   } catch (error) {
-    console.log("Error while logging in:", error);
-    res.status(500).json({ success: false, error: "Failed to login" });
+    console.log('Error while logging in:', error);
+    res.status(500).json({ success: false, error: 'Failed to login' });
   }
 });
-
-
-
 
 app.post("/donate", async (req, res) => {
   try {
@@ -103,13 +119,25 @@ app.post("/donate", async (req, res) => {
     res.status(500).json({ success: false, error: "Failed to create an account" });
   }
 })
+app.post('/insurance', async (req, res) => {
+  console.log(req.body)
+  try {
+    const { firstName, lastName, company, insuranceId, description, amount } = req.body;
 
+    const userDoc = await Donate.create({
+      firstName, lastName, company, insuranceId, description, amount
+    });
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.log("Error while creating an account", err);
+    res.status(500).json({ success: false, error: "Failed to create an account" });
+  }
+})
 app.post("/rPatients", async (req, res) => {
-  console.log("Hello")
   try {
     const { userName, password, appointmentDate } = req.body;
     const appDoc = await Appointment.findOne({ userName: userName });
-    console.log(appDoc)
+
     if (appDoc) {
       const isPasswordCorrect = bcrypt.compareSync(password, appDoc.password);
       if (isPasswordCorrect) {
@@ -121,7 +149,17 @@ app.post("/rPatients", async (req, res) => {
             { password: appDoc.password },
             { lastAppointmentDate: newDate }
           );
-          res.status(200).json({ success: true });
+          const [firstName, middleName, lastName] = appDoc.userName.split(" ");
+          const userDoc = await User.findOne({ firstName: firstName });
+
+          res.status(200).json({
+            success: true, data: {
+              "patientFirstName": firstName,
+              "patientLastName": middleName,
+              "appointmentDate": appointmentDate,
+              "email": userDoc.email, // Assuming the userDoc contains the email field
+            }
+          });
         } else {
           const newDate = new Date(appointmentDate);
           await Appointment.updateOne({
@@ -142,6 +180,7 @@ app.post("/rPatients", async (req, res) => {
     res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 });
+
 
 app.post("/referPatient", async (req, res) => {
   try {
@@ -181,7 +220,6 @@ app.get('/clinics', async (req, res) => {
 app.get('/findDoctors', async (req, res) => {
   const { specialization } = req.query;
   try {
-    // a more sophisticated logic can be implemented here if required
     const doctorDoc = await Doctor.find({ specialization });
     res.json(doctorDoc);
   } catch (err) {
@@ -243,5 +281,40 @@ app.get("/aboutDrug", async (req, res) => {
 })
 
 app.get("/profile")
+const { body, validationResult } = require('express-validator');
+
+app.post('/newPatient', [
+  body('email').notEmpty().isEmail(),
+  body('password').notEmpty(),
+  body('middleName').notEmpty(),
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { firstName, lastName, description, relation, email, password, middleName } = req.body;
+    const newPatient = new User({
+      firstName,
+      lastName,
+      description,
+      relation,
+      email,
+      password,
+      middleName,
+    });
+
+    await newPatient.save();
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error while processing newPatient request:', error);
+    return res.status(500).json({ success: false, error: 'Internal Server Error' });
+  }
+});
+
+
+
+
 
 module.exports = app;

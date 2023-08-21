@@ -10,49 +10,96 @@ function ReferringPhy() {
         address: '',
         referingDoctorName: '',
         referedDoctorName: '',
-        appointmentDate: null
+        appointmentDate: null,
     });
+
     const [errors, setErrors] = useState({
         patientFirstName: '',
         patientLastName: '',
         address: '',
         referingDoctorName: '',
         referedDoctorName: '',
-        appointmentDate: null
+        appointmentDate: '',
     });
     const router = useRouter();
+    const validateForm = () => {
+        let isValid = true;
+        const newErrors = {};
+        if (!formData.patientFirstName.trim()) {
+            newErrors.patientFirstName = 'Patient First Name is required';
+            isValid = false;
+        }
+        if (!formData.patientLastName.trim()) {
+            newErrors.patientLastName = 'Patient Last Name is required';
+            isValid = false;
+        }
+        if (!formData.address.trim()) {
+            newErrors.address = 'Address is required';
+            isValid = false;
+        }
+        if (!formData.referingDoctorName.trim()) {
+            newErrors.referingDoctorName = 'Your Name is required';
+            isValid = false;
+        }
+        if (!formData.referedDoctorName.trim()) {
+            newErrors.referedDoctorName = 'Doctor to be Referred is required';
+            isValid = false;
+        }
+        if (!formData.appointmentDate) {
+            newErrors.appointmentDate = 'Expected Appointment Date is required';
+            isValid = false;
+        }
+        setErrors(newErrors);
+        return isValid;
+    };
 
     const donate = (event) => {
         event.preventDefault();
-        const { patientFirstName, patientLastName, address, referingDoctorName, referedDoctorName, appointmentDate } = formData;
+        const {
+            patientFirstName,
+            patientLastName,
+            address,
+            referingDoctorName,
+            referedDoctorName,
+            appointmentDate,
+        } = formData;
 
-        fetch("http://localhost:5000/referPatient", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                patientFirstName,
-                patientLastName,
-                address,
-                referingDoctorName,
-                referedDoctorName,
-                appointmentDate,
-            }),
-        })
-            .then((response) => {
-                if (response.ok) {
-                    router.push('/Components/Done');
-                } else {
-                    throw new Error("Reference failed");
-                }
+        if (validateForm()) {
+            fetch("http://localhost:5000/referPatient", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    patientFirstName,
+                    patientLastName,
+                    address,
+                    referingDoctorName,
+                    referedDoctorName,
+                    appointmentDate,
+                }),
             })
-            .then((data) => {
-                console.log(data);
-            })
-            .catch((error) => {
-                console.error(error);
-            });
+                .then((response) => {
+                    if (response.ok) {
+                        router.push({
+                            pathname: '/Components/Done',
+                            query: {
+                                patientFirstName,
+                                patientLastName,
+                                address,
+                                referingDoctorName,
+                                referedDoctorName,
+                                appointmentDate,
+                            },
+                        });
+                    } else {
+                        throw new Error("Reference failed");
+                    }
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+        }
     };
 
     const handleChange = (ev) => {
